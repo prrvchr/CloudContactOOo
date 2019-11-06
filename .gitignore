@@ -1,0 +1,6 @@
+#Ignore Link File
+/CloudContactOOo/pythonpath/cloudcontact/dbtools.py
+/CloudContactOOo/pythonpath/cloudcontact/keymap.py
+/CloudContactOOo/pythonpath/cloudcontact/logger.py
+/CloudContactOOo/pythonpath/cloudcontact/unolib.py
+/CloudContactOOo/pythonpath/cloudcontact/unotools.py

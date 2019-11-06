@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#./make_rdb.sh
+./make_rdb.sh
 
 cd ./CloudContactOOo/
 
