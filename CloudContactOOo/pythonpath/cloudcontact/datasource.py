@@ -93,40 +93,21 @@ class DataSource(unohelper.Base,
         desktop = 'com.sun.star.frame.Desktop'
         self.ctx.ServiceManager.createInstance(desktop).addTerminateListener(self)
         print("DataSource.connect() OK")
-        #connection.Parent.DatabaseDocument.addCloseListener(self)
-        #mri = self.ctx.ServiceManager.createInstance('mytools.Mri')
-        #mri.inspect(connection.Parent.DatabaseDocument)
         return True
-    def closeConnection(self, connection, userid):
-        try:
-            print("DataSource.closeConnection()********* 1")
-            if not self._isLastConnection(connection, userid):
-                print("DataSource.closeConnection()********* 2")
-                return
-            return
-            if self._Statement is None:
-                print("DataSource.closeConnection()********* 3")
-                msg = "ERROR: database connection already dropped..."
-            else:
-                print("DataSource.closeConnection()********* 4")
-                query = getSqlQuery('shutdown')
-                self._Statement.execute(query)
-                self._Statement = None
-                msg = "Database connection close"
-            print(msg)
-        except Exception as e:
-            print("DataSource.closeConnection() ERROR: %s - %s" % (e, traceback.print_exc()))
 
-    def _isLastConnection(self, connection, userid):
-        connection.close()
-        if userid in self._UsersPool:
-            del self._UsersPool[userid]
-        last = True
-        for user in self._UsersPool.values():
-            if user.isConnected():
-                last = False
-                break
-        return last
+    # XTerminateListener
+    def queryTermination(self, event):
+        print("DataSource.queryTermination()")
+        msg = "DataSource queryTermination: Scheme: %s ... " % self.Provider.Host
+        if self._Statement is None:
+            msg += "ERROR: database connection already dropped..."
+        else:
+            query = getSqlQuery('shutdown')
+            self._Statement.execute(query)
+            msg += "Done"
+        print("DataSource.queryTermination() %s" % msg)
+    def notifyTermination(self, event):
+        pass
 
     def getUser(self, key):
         user = None
@@ -149,37 +130,6 @@ class DataSource(unohelper.Base,
         self._UsersPool[key] = user
         self.synchronize(user)
         return True
-
-    # XTerminateListener
-    def queryTermination(self, event):
-        print("DataSource.queryTermination()")
-        msg = "DataSource queryTermination: Scheme: %s ... " % self.Provider.Host
-        if self._Statement is None:
-            msg += "ERROR: database connection already dropped..."
-        else:
-            query = getSqlQuery('shutdown')
-            self._Statement.execute(query)
-            msg += "Done"
-        print("DataSource.queryTermination() %s" % msg)
-    def notifyTermination(self, event):
-        pass
-
-    # XCloseListener
-    def queryClosing(self, source, ownership):
-        print("DataSource.queryClosing()")
-        msg = "Driver queryClosing: Scheme: %s ... " % self.Provider.Host
-        if self._Statement is None:
-            level = SEVERE
-            msg += "ERROR: database connection already dropped..."
-        else:
-            level = INFO
-            query = getSqlQuery('shutdown')
-            self._Statement.execute(query)
-            msg += "Done"
-        self.Logger.logp(level, "ContentProvider", "queryClosing()", msg)
-        print("DataSource.queryClosing() %s" % msg)
-    def notifyClosing(self, source):
-        pass
 
     # XRestDataSource
     def selectUser(self, account, retrieved=False):

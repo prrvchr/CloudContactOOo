@@ -20,8 +20,6 @@ interface XRestDataSource: com::sun::star::uno::XInterface
     boolean isConnected();
     boolean connect([in] ::com::sun::star::uno::XInterface DbContext,
                     [in] string Url);
-    void closeConnection([in] ::com::sun::star::uno::XInterface Connection,
-                         [in] string Key);
 
     ::com::sun::star::uno::XInterface getUser([in] string Key);
     boolean setUser([in] ::com::sun::star::uno::XInterface User,

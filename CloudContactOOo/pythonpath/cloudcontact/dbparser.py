@@ -16,6 +16,7 @@ class DataParser(unohelper.Base,
         self.datasource = datasource
         self.map = datasource.getFieldsMap(True)
         self.keys = self.map.getKeys()
+        print("dbpaser.DataParser(): %s" % (self.keys, ))
 
     def jsonParser(self, pairs):
         data = KeyMap()

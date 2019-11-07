@@ -105,106 +105,6 @@ def getSqlQuery(name, format=None):
     elif name == 'setTableReadOnly':
         query = 'SET TABLE "%s" READONLY TRUE' % format
 
-# Create Static View Queries
-    elif name == 'createTableView':
-        c1 = '"TableId"'
-        c2 = '"ColumnId"'
-        c3 = '"Table"'
-        c4 = '"Column"'
-        c5 = '"Type"'
-        c6 = '"Lenght"'
-        c7 = '"Default"'
-        c8 = '"Options"'
-        c9 = '"Primary"'
-        c10 = '"Unique"'
-        c11 = '"ForeignTableId"'
-        c12 = '"ForeignColumnId"'
-        c13 = '"ForeignTable"'
-        c14 = '"ForeignColumn"'
-        c15 = '"View"'
-        c = (c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13,c14,c15)
-        s1 = '"T"."Table"'
-        s2 = '"C"."Column"'
-        s3 = '"T"."Name"'
-        s4 = '"C"."Name"'
-        s5 = '"TC"."TypeName"'
-        s6 = '"TC"."TypeLenght"'
-        s7 = '"TC"."Default"'
-        s8 = '"TC"."Options"'
-        s9 = '"TC"."Primary"'
-        s10 = '"TC"."Unique"'
-        s11 = '"TC"."ForeignTable"'
-        s12 = '"TC"."ForeignColumn"'
-        s13 = '"T2"."Name"'
-        s14 = '"C2"."Name"'
-        s15 = '"T"."View"'
-        s = (s1,s2,s3,s4,s5,s6,s7,s8,s9,s10,s11,s12,s13,s14,s15)
-        f1 = '"Tables" AS "T"'
-        f2 = 'JOIN "TableColumn" AS "TC" ON "T"."Table"="TC"."Table"'
-        f3 = 'JOIN "Columns" AS "C" ON "TC"."Column"="C"."Column"'
-        f4 = 'LEFT JOIN "Tables" AS "T2" ON "TC"."ForeignTable"="T2"."Table"'
-        f5 = 'LEFT JOIN "Columns" AS "C2" ON "TC"."ForeignColumn"="C2"."Column"'
-        f = (f1, f2, f3, f4, f5)
-        p = (','.join(c), ','.join(s), ' '.join(f))
-        query = 'CREATE VIEW "TableView" (%s) AS SELECT %s FROM %s' % p
-    elif name == 'createViewView':
-        c1 = '"TableId"'
-        c2 = '"LabelId"'
-        c3 = '"TypeId"'
-        c4 = '"Table"'
-        c5 = '"Label"'
-        c6 = '"Type"'
-        c7 = '"View"'
-        c8 = '"PrimaryTable"'
-        c9 = '"PrimaryColumn"'
-        c10 = '"ForeignTable"'
-        c11 = '"ForeignColumn"'
-        c = (c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11)
-        s1 = '"T"."Table"'
-        s2 = '"TL"."Label"'
-        s3 = '"TT"."Type"'
-        s4 = '"T"."Name"'
-        s5 = '"L"."Name"'
-        s6 = '"T3"."Name"'
-        s7 = 'CONCAT(COALESCE("T3"."Name",\'\'),COALESCE("TL"."View","L"."Name"))'
-        s8 = '"T1"."Name"'
-        s9 = '"C1"."Name"'
-        s10 = '"T2"."Name"'
-        s11 = '"C2"."Name"'
-        s = (s1,s2,s3,s4,s5,s6,s7,s8,s9,s10,s11)
-        f1 = '"Tables" AS "T", "Tables" AS "T1", "Tables" AS "T2"'
-        f2 = 'JOIN "TableLabel" AS "TL" ON "T"."Table"="TL"."Table"'
-        f3 = 'JOIN "Labels" AS "L" ON "TL"."Label"="L"."Label"'
-        f4 = 'LEFT JOIN "TableType" AS "TT" ON "T"."Table"="TT"."Table"'
-        f5 = 'LEFT JOIN "Types" AS "T3" ON "TT"."Type"="T3"."Type"'
-        f6 = 'JOIN "Columns" AS "C1" ON "T1"."Identity"="C1"."Column"'
-        f7 = 'JOIN "Columns" AS "C2" ON "T2"."Identity"="C2"."Column"'
-        w = '"T"."View"=TRUE AND "T1"."Identity"=0 AND "T2"."Identity"=5'
-        f = (f1, f2, f3, f4, f5, f6, f7)
-        p = (','.join(c), ','.join(s), ' '.join(f), w)
-        query = 'CREATE VIEW "ViewView" (%s) AS SELECT %s FROM %s WHERE %s' % p
-    elif name == 'createFieldView':
-        c1 = '"Field"'
-        c2 = '"Value"'
-        c3 = '"Type"'
-        c4 = '"Table"'
-        c5 = '"Name"'
-        c = (c1, c2, c3, c4, c5)
-        s1 = '"F"."Field"'
-        s2 = '"F"."Name"'
-        s3 = '"F"."Type"'
-        s4 = '"F"."Table"'
-        s5 = 'COALESCE("T"."Name","C"."Name","L"."Name","F2"."Name")'
-        s = (s1, s2, s3, s4, s5)
-        f1 = '"Fields" AS "F"'
-        f2 = 'LEFT JOIN "Tables" AS "T" ON "F"."Table"=%s AND "F"."Column"="T"."Table"'
-        f3 = 'LEFT JOIN "Columns" AS "C" ON "F"."Table"=%s AND "F"."Column"="C"."Column"'
-        f4 = 'LEFT JOIN "Labels" AS "L" ON "F"."Table"=%s AND "F"."Column"="L"."Label"'
-        f5 = 'LEFT JOIN "Fields" AS "F2" ON "F"."Table"=%s AND "F"."Field"="F2"."Field"'
-        f = (f1, f2 % "'Tables'", f3 % "'Columns'", f4 % "'Labels'", f5 % "'Loop'")
-        p = (','.join(c), ','.join(s), ' '.join(f))
-        query = 'CREATE VIEW "FieldView" (%s) AS SELECT %s FROM %s' % p
-
 # Create Cached Table Options
     elif name == 'getPrimayKey':
         query = 'PRIMARY KEY(%s)' % ','.join(format)
@@ -254,35 +154,72 @@ CREATE TRIGGER "TableColumnTrigger" AFTER INSERT ON "TableColumn"
         query = 'SELECT "Name" FROM "Tables" WHERE "View" IS NOT NULL ORDER BY "Table"'
     elif name == 'getViewName':
         query = 'SELECT "Name" FROM "Tables" WHERE "View"=TRUE ORDER BY "Table"'
-    elif name == 'getTableColumn':
-        c1 = '"Table"'
-        c2 = '"Column"'
-        c3 = '"Type"'
-        c4 = '"Lenght"'
-        c5 = '"Default"'
-        c6 = '"Options"'
-        c7 = '"Primary"'
-        c8 = '"Unique"'
-        c9 = '"ForeignTable"'
-        c10 = '"ForeignColumn"'
-        c = (c1,c2,c3,c4,c5,c6,c7,c8,c9,c10)
-        p = (','.join(c))
-        query = 'SELECT %s FROM "TableView" WHERE "Table"=? ORDER BY "TableId","ColumnId"' % p
-    elif name == 'getViewColumn':
-        c1 = '"TableId"'
-        c2 = '"LabelId"'
-        c3 = '"TypeId"'
-        c4 = '"Table"'
-        c5 = '"Label"'
-        c6 = '"Type"'
-        c7 = '"View"'
-        c8 = '"PrimaryTable"'
-        c9 = '"PrimaryColumn"'
-        c10 = '"ForeignTable"'
-        c11 = '"ForeignColumn"'
-        c = (c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11)
-        p = (','.join(c))
-        query = 'SELECT %s FROM "ViewView" WHERE "Table"=? ORDER BY "TableId","LabelId","TypeId"' % p
+
+    elif name == 'getTables':
+        s1 = '"T"."Table" AS "TableId"'
+        s2 = '"C"."Column" AS "ColumnId"'
+        s3 = '"T"."Name" AS "Table"'
+        s4 = '"C"."Name" AS "Column"'
+        s5 = '"TC"."TypeName" AS "Type"'
+        s6 = '"TC"."TypeLenght" AS "Lenght"'
+        s7 = '"TC"."Default"'
+        s8 = '"TC"."Options"'
+        s9 = '"TC"."Primary"'
+        s10 = '"TC"."Unique"'
+        s11 = '"TC"."ForeignTable" AS "ForeignTableId"'
+        s12 = '"TC"."ForeignColumn" AS "ForeignColumnId"'
+        s13 = '"T2"."Name" AS "ForeignTable"'
+        s14 = '"C2"."Name" AS "ForeignColumn"'
+        s15 = '"T"."View"'
+        s = (s1,s2,s3,s4,s5,s6,s7,s8,s9,s10,s11,s12,s13,s14,s15)
+        f1 = '"Tables" AS "T"'
+        f2 = 'JOIN "TableColumn" AS "TC" ON "T"."Table"="TC"."Table"'
+        f3 = 'JOIN "Columns" AS "C" ON "TC"."Column"="C"."Column"'
+        f4 = 'LEFT JOIN "Tables" AS "T2" ON "TC"."ForeignTable"="T2"."Table"'
+        f5 = 'LEFT JOIN "Columns" AS "C2" ON "TC"."ForeignColumn"="C2"."Column"'
+        w = '"T"."Name"=?'
+        f = (f1, f2, f3, f4, f5)
+        p = (','.join(s), ' '.join(f), w)
+        query = 'SELECT %s FROM %s WHERE %s' % p
+    elif name == 'getViews':
+        s1 = '"T"."Table" AS "TableId"'
+        s2 = '"TL"."Label" AS "LabelId"'
+        s3 = '"TT"."Type" AS "TypeId"'
+        s4 = '"T"."Name" AS "Table"'
+        s5 = '"L"."Name" AS "Label"'
+        s6 = '"T3"."Name" AS "Type"'
+        s7 = 'CONCAT(COALESCE("T3"."Name",\'\'),COALESCE("TL"."View","L"."Name")) AS "View"'
+        s8 = '"T1"."Name" AS "PrimaryTable"'
+        s9 = '"C1"."Name" AS "PrimaryColumn"'
+        s10 = '"T2"."Name" AS "ForeignTable"'
+        s11 = '"C2"."Name" AS "ForeignColumn"'
+        s = (s1,s2,s3,s4,s5,s6,s7,s8,s9,s10,s11)
+        f1 = '"Tables" AS "T", "Tables" AS "T1", "Tables" AS "T2"'
+        f2 = 'JOIN "TableLabel" AS "TL" ON "T"."Table"="TL"."Table"'
+        f3 = 'JOIN "Labels" AS "L" ON "TL"."Label"="L"."Label"'
+        f4 = 'LEFT JOIN "TableType" AS "TT" ON "T"."Table"="TT"."Table"'
+        f5 = 'LEFT JOIN "Types" AS "T3" ON "TT"."Type"="T3"."Type"'
+        f6 = 'JOIN "Columns" AS "C1" ON "T1"."Identity"="C1"."Column"'
+        f7 = 'JOIN "Columns" AS "C2" ON "T2"."Identity"="C2"."Column"'
+        w = '"T"."View"=TRUE AND "T1"."Identity"=0 AND "T2"."Identity"=5 AND "T"."Name"=? '
+        f = (f1, f2, f3, f4, f5, f6, f7)
+        p = (','.join(s), ' '.join(f), w)
+        query = 'SELECT %s FROM %s WHERE %s ORDER BY "TableId","LabelId","TypeId"' % p
+    elif name == 'getFieldsMap':
+        s1 = '"F"."Name" AS "Value"'
+        s2 = 'COALESCE("Tables"."Name","Columns"."Name","Labels"."Name","Fields"."Name") AS "Name"'
+        s3 = '"F"."Type"'
+        s4 = '"F"."Table"'
+        s = (s1, s2, s3, s4)
+        f1 = '"Fields" AS "F"'
+        f2 = 'LEFT JOIN "Tables" ON "F"."Table"=%s AND "F"."Column"="Tables"."Table"'
+        f3 = 'LEFT JOIN "Columns" ON "F"."Table"=%s AND "F"."Column"="Columns"."Column"'
+        f4 = 'LEFT JOIN "Labels" ON "F"."Table"=%s AND "F"."Column"="Labels"."Label"'
+        f5 = 'LEFT JOIN "Fields" ON "F"."Table"=%s AND "F"."Field"="Fields"."Field"'
+        f = (f1, f2 % "'Tables'", f3 % "'Columns'", f4 % "'Labels'", f5 % "'Loop'")
+        p = (','.join(s), ' '.join(f))
+        query = 'SELECT %s FROM %s  ORDER BY "F"."Field"' % p
+
     elif name == 'getTypesIndex':
         query = 'SELECT "Value","Type" FROM "Types" ORDER BY "Type"'
     elif name == 'getTypesDefault':
@@ -296,15 +233,29 @@ CREATE TRIGGER "TableColumnTrigger" AFTER INSERT ON "TableColumn"
         query = 'SELECT %s FROM %s ORDER BY "T2"."Table"' % p
     elif name == 'getLabelIndex':
         query = 'SELECT "Name","Label" FROM "Labels" ORDER BY "Label"'
-    elif name == 'getFieldsMap':
-        query = 'SELECT "Value","Name","Type","Table" FROM "FieldView" ORDER BY "Field"'
-    elif name == 'getPrimaryField':
-        where = ("'Primary'","'Columns'")
-        query = 'SELECT "Name" FROM "FieldView" WHERE "Type"=%s AND "Table"=%s' % where
-    elif name == 'getPrimaryTable':
-        where = ("'Primary'","'Tables'")
-        query = 'SELECT "Name" FROM "FieldView" WHERE "Type"=%s AND "Table"=%s' % where
 
+    elif name == 'getPrimaryField':
+        s = 'COALESCE("Tables"."Name","Columns"."Name","Labels"."Name","Fields"."Name") AS "Name"'
+        f1 = '"Fields" AS "F"'
+        f2 = 'LEFT JOIN "Tables" ON "F"."Table"=%s AND "F"."Column"="Tables"."Table"'
+        f3 = 'LEFT JOIN "Columns" ON "F"."Table"=%s AND "F"."Column"="Columns"."Column"'
+        f4 = 'LEFT JOIN "Labels" ON "F"."Table"=%s AND "F"."Column"="Labels"."Label"'
+        f5 = 'LEFT JOIN "Fields" ON "F"."Table"=%s AND "F"."Field"="Fields"."Field"'
+        f = (f1, f2 % "'Tables'", f3 % "'Columns'", f4 % "'Labels'", f5 % "'Loop'")
+        w = '"F"."Type"=%s AND "F"."Table"=%s' % ("'Primary'","'Columns'")
+        p = (s, ' '.join(f), w)
+        query = 'SELECT %s FROM %s WHERE %s' % p
+    elif name == 'getPrimaryTable':
+        s = 'COALESCE("Tables"."Name","Columns"."Name","Labels"."Name","Fields"."Name") AS "Name"'
+        f1 = '"Fields" AS "F"'
+        f2 = 'LEFT JOIN "Tables" ON "F"."Table"=%s AND "F"."Column"="Tables"."Table"'
+        f3 = 'LEFT JOIN "Columns" ON "F"."Table"=%s AND "F"."Column"="Columns"."Column"'
+        f4 = 'LEFT JOIN "Labels" ON "F"."Table"=%s AND "F"."Column"="Labels"."Label"'
+        f5 = 'LEFT JOIN "Fields" ON "F"."Table"=%s AND "F"."Field"="Fields"."Field"'
+        f = (f1, f2 % "'Tables'", f3 % "'Columns'", f4 % "'Labels'", f5 % "'Loop'")
+        w = '"F"."Type"=%s AND "F"."Table"=%s' % ("'Primary'","'Tables'")
+        p = (s, ' '.join(f), w)
+        query = 'SELECT %s FROM %s WHERE %s' % p
     elif name == 'getPeopleIndex':
         query = 'SELECT "Resource","People" FROM "Peoples" ORDER BY "People"'
     elif name == 'getPerson':

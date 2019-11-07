@@ -42,9 +42,8 @@ def _createDataSource(ctx, dbcontext, url, location, dbname):
 def _createDataBase(datasource):
     connection = datasource.getConnection('', '')
     statement = connection.createStatement()
-    tables, triggers, views = _getStaticTablesAndViews()
-    _createStaticTable(statement, tables, triggers)
-    executeQueries(statement, views)
+    tables = _getStaticTables()
+    _createStaticTable(statement, tables)
     _createDynamicTable(statement)
     executeQueries(statement, _getQueries())
     _createDynamicView(statement)
@@ -69,13 +68,9 @@ def _getColumns(metadata, table):
         columns.append(column)
     return columns
 
-def _createStaticTable(statement, tables, triggers):
+def _createStaticTable(statement, tables):
     for table in tables:
         query = getSqlQuery('createTable' + table)
-        print("dbtool._createStaticTable(): %s" % query)
-        statement.executeQuery(query)
-    for trigger in triggers:
-        query = getSqlQuery('createTrigger' + trigger)
         print("dbtool._createStaticTable(): %s" % query)
         statement.executeQuery(query)
     columns = _getTableColumns(statement.getConnection(), tables)
@@ -99,7 +94,7 @@ def _getCreateViewQueries(statement):
     s1 = []
     f1 = []
     queries = []
-    call = getDataSourceCall(statement.getConnection(), 'getViewColumn')
+    call = getDataSourceCall(statement.getConnection(), 'getViews')
     tables = getSequenceFromResult(statement.executeQuery(getSqlQuery('getViewName')))
     for table in tables:
         call.setString(1, table)
@@ -152,7 +147,7 @@ def _executeQueries(statement, queries):
     for query in queries:
         statement.executeQuery(query)
 
-def _getStaticTablesAndViews():
+def _getStaticTables():
     tables = ('Tables',
               'Types',
               'Columns',
@@ -162,30 +157,7 @@ def _getStaticTablesAndViews():
               'Labels',
               'TableLabel',
               'Settings')
-    triggers = ()
-    views = ('createTableView',
-             'createViewView',
-             'createFieldView')
-    return tables, triggers, views
+    return tables
 
 def _getQueries():
     return ('createRole', )
-    return ('createOrganisationsNameView',
-            'createOrganisationsTitleView',
-            'createOrganisationsDepartmentView',
-            'createDisplayNameView',
-            'createFamilyNameView',
-            'createGivenNameView',
-            'createStreetAddressView',
-            'createExtendedAddressView',
-            'createPostalCodeView',
-            'createCityView',
-            'createRegionView',
-            'createCountryView',
-            'createEmailView',
-            'createHomePhoneView',
-            'createWorkPhoneView',
-            'createMobilePhoneView',
-            'createAddressBookView',
-            'createRole',
-            'grantRole')

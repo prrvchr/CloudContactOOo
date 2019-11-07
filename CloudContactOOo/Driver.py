@@ -182,28 +182,6 @@ class Driver(unohelper.Base,
         print("Driver.getMinorVersion()")
         return 0
 
-    def _getChachedUser(self, key):
-        if key in Driver.__usersPool:
-            user = Driver.__usersPool[key]
-            #self.DataSource.synchronize(user)
-            return user
-        return None
-
-    def _setUser(self, user, url, key, password):
-        if key not in Driver.__usersPool:
-            dbcontext = self.ctx.ServiceManager.createInstance('com.sun.star.sdb.DatabaseContext')
-            path = getDataSourceUrl(self.ctx, dbcontext, url, g_identifier, False)
-            credential = user.getCredential(password)
-            print("Driver._setUser() %s - %s" % credential)
-            connection, error = getDataSourceConnection(dbcontext, path, *credential)
-            if error is not None:
-                print("Driver._setUser %s" % error)
-                return False
-            # Piggyback DataBase Connections (easy and clean ShutDown ;-) )
-            user.setConnection(connection)
-            Driver.__usersPool[key] = user
-            #self.DataSource.synchronize(user)
-
     def _getUserCredential(self, infos):
         username = ''
         password = ''

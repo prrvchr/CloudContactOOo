@@ -44,11 +44,6 @@ class User(unohelper.Base,
             return self._Statement.getConnection()
         return None
 
-    def isConnected(self):
-        if self.Connection:
-            return not self.Connection.isClosed()
-        return False
-
     def getWarnings(self):
         if self._Warnings:
             return self._Warnings.pop(0)
@@ -65,9 +60,6 @@ class User(unohelper.Base,
             warning = self._getWarning('Setup ERROR', 1013, msg, self, None)
             self._Warnings.append(warning)
         return request
-
-    def _setSessionMode(self, provider):
-        provider.SessionMode = self.Request.getSessionMode(provider.Host)
 
     def initialize(self, datasource, name, password):
         try:
@@ -107,9 +99,7 @@ class User(unohelper.Base,
         self._Statement = connection.createStatement()
 
     def getCredential(self, password):
-        #name = 'U%s' % self.Resource.upper()
-        name = self.People
-        return name, password
+        return self.People, password
 
     def _getWarning(self, state, code, message, context=None, exception=None):
         warning = SQLWarning()
