@@ -85,7 +85,8 @@ class Driver(unohelper.Base,
                 msg = "You must provide a UserName!"
                 raise self._getException('Authentication ERROR', 1003, msg, self)
             level = INFO
-            scheme = '%s-%s' % (protocols[1], self._supportedSubProtocols[1])
+            #scheme = '%s-%s' % (protocols[1], self._supportedSubProtocols[1])
+            scheme = self.DataSource.Provider.Host
             msg = "Driver for Scheme: %s loading ... " % scheme
             print("Driver.connect() 2 *****************")
             if not self.DataSource.isConnected():

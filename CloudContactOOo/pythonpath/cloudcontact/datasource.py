@@ -203,19 +203,21 @@ class DataSource(unohelper.Base,
                 response = enumerator.nextElement()
                 status = response.IsPresent
                 if status:
-                    data = response.Value
-                    if data.hasValue(pattern):
-                        self._mergeResource(user, map, pattern, data, timestamp)
-                    else:
-                        for key in data.getKeys():
-                            d = data.getValue(key)
-                            m = map.getValue(key).getValue('Type')
-                            self._mergeResponse(user, map, pattern, key, d, timestamp, m)
+                    self._syncResponse(user, map, pattern, response.Value, timestamp)
             self._closeDataSourceCall()
             print("DataSource.synchronize() 3")
             return status
         except Exception as e:
             print("DataSource._syncPeople() ERROR: %s - %s" % (e, traceback.print_exc()))
+
+    def _syncResponse(self, user, map, pattern, data, timestamp):
+        if data.hasValue(pattern):
+            self._mergeResource(user, map, pattern, data, timestamp)
+        else:
+            for key in data.getKeys():
+                d = data.getValue(key)
+                m = map.getValue(key).getValue('Type')
+                self._mergeResponse(user, map, pattern, key, d, timestamp, m)
 
     def _mergeResponse(self, user, map, pattern, key, data, timestamp, method):
         print("DataSource._mergeResponse: %s" % (method, ))
@@ -261,7 +263,7 @@ class DataSource(unohelper.Base,
         print("DataSource._mergeField: 1: %s - %s - %s - %s" % (value, index, label, typ))
         if label is None:
             return
-        call = self._getDataSourceCall('update' + table)
+        call = self._getPreparedCall('update' + table)
         call.setString(1, value)
         call.setTimestamp(2, timestamp)
         call.setLong(3, index)
@@ -271,7 +273,7 @@ class DataSource(unohelper.Base,
         row = call.executeUpdate()
         #call.close()
         if row != 1:
-            call = self._getDataSourceCall('insert' + table)
+            call = self._getPreparedCall('insert' + table)
             call.setString(1, value)
             call.setLong(2, index)
             call.setLong(3, label)
@@ -429,6 +431,16 @@ class DataSource(unohelper.Base,
         for call in self._Calls.values():
             call.close()
         self._Calls = {}
+
+    def _getPreparedCall(self, name):
+        if name in self._Calls:
+            return self._Calls[name]
+        # TODO: cannot use: call = self.Connection.prepareCommand(name, QUERY)
+        # TODO: it trow a: java.lang.IncompatibleClassChangeError
+        query = self.Connection.getQueries().getByName(name).Command
+        call = self.Connection.prepareCall(query)
+        self._Calls[name] = call
+        return call
 
     def _getDataSourceCall(self, name):
         if name in self._Calls:

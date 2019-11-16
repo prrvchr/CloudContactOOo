@@ -5,7 +5,7 @@
 from .unotools import getResourceLocation
 from .unotools import getSimpleFile
 
-from .dbtools import getCreateTableQueries
+from .dbtools import getTablesAndStatements
 from .dbtools import getDataSourceCall
 from .dbtools import getSequenceFromResult
 from .dbtools import getKeyMapFromResult
@@ -36,15 +36,16 @@ def _createDataSource(ctx, dbcontext, url, location, dbname):
     datasource.URL = getDataSourceLocation(location, dbname, False)
     datasource.Info = getDataSourceInfo() + getDataSourceJavaInfo(location)
     datasource.DatabaseDocument.storeAsURL(url, ())
-    _createDataBase(datasource)
+    _createDataBase(ctx, datasource)
     datasource.DatabaseDocument.store()
 
-def _createDataBase(datasource):
+def _createDataBase(ctx, datasource):
     connection = datasource.getConnection('', '')
     statement = connection.createStatement()
-    tables = _getStaticTables()
-    _createStaticTable(statement, tables)
-    _createDynamicTable(statement)
+    _createStaticTable(statement, _getStaticTables())
+    tables, statements = getTablesAndStatements(statement)
+    _executeQueries(statement, tables)
+    _createPreparedStatement(ctx, datasource, statements)
     executeQueries(statement, _getQueries())
     _createDynamicView(statement)
     #mri = ctx.ServiceManager.createInstance('mytools.Mri')
@@ -81,9 +82,16 @@ def _createStaticTable(statement, tables):
         #statement.executeQuery(getSqlQuery('setTableHeader', format))
         #statement.executeQuery(getSqlQuery('setTableReadOnly', table))
 
-def _createDynamicTable(statement):
-    queries = getCreateTableQueries(statement)
-    _executeQueries(statement, queries)
+def _createPreparedStatement(ctx, datasource, statements):
+    queries = datasource.getQueryDefinitions()
+    for name, sql in statements.items():
+        if not queries.hasByName(name):
+            query = ctx.ServiceManager.createInstance("com.sun.star.sdb.QueryDefinition")
+            query.Command = sql
+            queries.insertByName(name, query)
+    datasource.DatabaseDocument.store()
+    #mri = ctx.ServiceManager.createInstance('mytools.Mri')
+    #mri.inspect(datasource)
 
 def _createDynamicView(statement):
     queries = _getCreateViewQueries(statement)

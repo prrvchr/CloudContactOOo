@@ -274,83 +274,16 @@ CREATE TRIGGER "TableColumnTrigger" AFTER INSERT ON "TableColumn"
         columns = '"People","Connection"'
         values = '?,?'
         query = 'INSERT INTO "Connections" (%s) VALUES (%s)' % (columns, values)
-
     elif name == 'insertTypes':
         columns = '"Name","Value"'
         values = '?,?'
         query = 'INSERT INTO "Types" (%s) VALUES (%s)' % (columns, values)
-
-    elif name == 'insertLocales':
-        columns = '"Value","People","Label"'
-        values = '?,?,?'
-        query = 'INSERT INTO "Locales" (%s) VALUES (%s)' % (columns, values)
-    elif name == 'insertNames':
-        columns = '"Value","People","Label"'
-        values = '?,?,?'
-        query = 'INSERT INTO "Names" (%s) VALUES (%s)' % (columns, values)
-    elif name == 'insertAddresses':
-        columns = '"Value","People","Label","Type"'
-        values = '?,?,?,?'
-        query = 'INSERT INTO "Addresses" (%s) VALUES (%s)' % (columns, values)
-    elif name == 'insertEmails':
-        columns = '"Value","People","Label","Type"'
-        values = '?,?,?,?'
-        query = 'INSERT INTO "Emails" (%s) VALUES (%s)' % (columns, values)
-    elif name == 'insertPhones':
-        columns = '"Value","People","Label","Type"'
-        values = '?,?,?,?'
-        query = 'INSERT INTO "Phones" (%s) VALUES (%s)' % (columns, values)
-    elif name == 'insertOrganisations':
-        columns = '"Value","People","Label","Type"'
-        values = '?,?,?,?'
-        query = 'INSERT INTO "Organisations" (%s) VALUES (%s)' % (columns, values)
-    elif name == 'insertSips':
-        columns = '"Value","People","Label","Type"'
-        values = '?,?,?,?'
-        query = 'INSERT INTO "Sips" (%s) VALUES (%s)' % (columns, values)
-    elif name == 'insertDefineds':
-        columns = '"Value","People","Label"'
-        values = '?,?,?'
-        query = 'INSERT INTO "Defineds" (%s) VALUES (%s)' % (columns, values)
 
 # Update Queries
     elif name == 'updatePeoples':
         query = 'UPDATE "Peoples" SET "TimeStamp"=? WHERE "Resource"=?'
     elif name == 'updateToken':
         query = 'UPDATE "Peoples" SET "Token"=?,"TimeStamp"=? WHERE "People"=?'
-
-    elif name == 'updateLocales':
-        values = '"Value"=?,"TimeStamp"=?'
-        where = '"People"=? AND "Label"=?'
-        query = 'UPDATE "Locales" SET %s WHERE %s' % (values, where)
-    elif name == 'updateNames':
-        values = '"Value"=?,"TimeStamp"=?'
-        where = '"People"=? AND "Label"=?'
-        query = 'UPDATE "Names" SET %s WHERE %s' % (values, where)
-    elif name == 'updateAddresses':
-        values = '"Value"=?,"TimeStamp"=?'
-        where = '"People"=? AND "Label"=? AND "Type"=?'
-        query = 'UPDATE "Addresses" SET %s WHERE %s' % (values, where)
-    elif name == 'updateEmails':
-        values = '"Value"=?,"TimeStamp"=?'
-        where = '"People"=? AND "Label"=? AND "Type"=?'
-        query = 'UPDATE "Emails" SET %s WHERE %s' % (values, where)
-    elif name == 'updatePhones':
-        values = '"Value"=?,"TimeStamp"=?'
-        where = '"People"=? AND "Label"=? AND "Type"=?'
-        query = 'UPDATE "Phones" SET %s WHERE %s' % (values, where)
-    elif name == 'updateOrganisations':
-        values = '"Value"=?,"TimeStamp"=?'
-        where = '"People"=? AND "Label"=? AND "Type"=?'
-        query = 'UPDATE "Organisations" SET %s WHERE %s' % (values, where)
-    elif name == 'updateSips':
-        values = '"Value"=?,"TimeStamp"=?'
-        where = '"People"=? AND "Label"=? AND "Type"=?'
-        query = 'UPDATE "Sips" SET %s WHERE %s' % (values, where)
-    elif name == 'updateDefineds':
-        values = '"Value"=?,"TimeStamp"=?'
-        where = '"People"=? AND "Label"=?'
-        query = 'UPDATE "Defineds" SET %s WHERE %s' % (values, where)
 
 # Get DataBase Version Query
     elif name == 'getVerion':
