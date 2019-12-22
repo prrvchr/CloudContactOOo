@@ -122,6 +122,7 @@ def _getCreateViewQueries(statement):
             f2 = []
             data = getKeyMapFromResult(result, KeyMap())
             view = data.getValue('View')
+            versioned = data.getValue('Versioned')
             ptable = data.getValue('PrimaryTable')
             pcolumn = data.getValue('PrimaryColumn')
             ftable = data.getValue('ForeignTable')
