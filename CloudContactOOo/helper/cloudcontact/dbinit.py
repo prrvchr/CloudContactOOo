@@ -2,9 +2,9 @@
 # -*- coding: utf_8 -*-
 
 
-from oauth2 import KeyMap
-from oauth2 import getResourceLocation
-from oauth2 import getSimpleFile
+from unolib import KeyMap
+from unolib import getResourceLocation
+from unolib import getSimpleFile
 
 from .dbconfig import g_path
 from .dbqueries import getSqlQuery
