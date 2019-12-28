@@ -45,6 +45,7 @@ class OptionsDialog(unohelper.Base,
     def __init__(self, ctx):
         self.ctx = ctx
         self.stringResource = getStringResource(self.ctx, g_identifier, g_extension, 'OptionsDialog')
+        logMessage(self.ctx, INFO, "Loading ... Done", 'OptionsDialog', '__init__()')
 
     # XContainerWindowEventHandler, XDialogEventHandler
     def callHandlerMethod(self, dialog, event, method):
@@ -150,12 +151,30 @@ class OptionsDialog(unohelper.Base,
         setLoggerSetting(self.ctx, enabled, index, handler)
 
     def _viewData(self, dialog):
+<<<<<<< HEAD
         dbcontext = createService(self.ctx, 'com.sun.star.sdb.DatabaseContext')
         url, error = getDataSourceUrl(self.ctx, dbcontext, g_host, g_identifier, False)
         if error is not None:
             return
         desktop = createService(self.ctx, 'com.sun.star.frame.Desktop')
         desktop.loadComponentFromURL(url, '_default', 0, ())
+=======
+        try:
+            location = getResourceLocation(self.ctx, g_identifier, g_path)
+            logMessage(self.ctx, INFO, location, 'OptionsDialog', '_viewData()')
+            url = getDataSourceLocation(location, 'Test', True)
+            logMessage(self.ctx, INFO, url, 'OptionsDialog', '_viewData()')
+            drvmgr = createService(self.ctx, 'com.sun.star.sdbc.DriverManager')
+            info = getDataSourceJavaInfo(location)
+            connection = drvmgr.getConnectionWithInfo(url, info)
+            version = connection.getMetaData().getDriverVersion()
+            msg = "Connection.isClosed: %s - %s" % (connection.isClosed(), version)
+            logMessage(self.ctx, INFO, msg, 'OptionsDialog', '_viewData()')
+        except exception as e:
+            msg = "ERROR: %s" % e
+            logMessage(self.ctx, SEVERE, msg, 'OptionsDialog', '_viewData()')
+        logMessage(self.ctx, INFO, "**********************", 'OptionsDialog', '_viewData()')
+>>>>>>> 56440bd42f09e2802b0e6aea14254476d51a8646
 
     # XServiceInfo
     def supportsService(self, service):
