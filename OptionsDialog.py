@@ -18,6 +18,7 @@ from unolib import createService
 
 from cloudcontact import getDataSourceLocation
 from cloudcontact import getDataSourceJavaInfo
+from cloudcontact import getDataSourceUrl
 
 from cloudcontact import getLoggerUrl
 from cloudcontact import getLoggerSetting
@@ -28,6 +29,7 @@ from cloudcontact import logMessage
 from cloudcontact import g_extension
 from cloudcontact import g_identifier
 from cloudcontact import g_path
+from cloudcontact import g_host
 
 import traceback
 
@@ -148,19 +150,12 @@ class OptionsDialog(unohelper.Base,
         setLoggerSetting(self.ctx, enabled, index, handler)
 
     def _viewData(self, dialog):
-        location = getResourceLocation(self.ctx, g_identifier, g_path)
-        print("OptionDialog._viewData() %s" % location)
-        url = getDataSourceLocation(location, 'Test', True)
-        print("OptionDialog._viewData() %s" % url)
-        drvmgr = createService(self.ctx, 'com.sun.star.sdbc.DriverManager')
-        info = getDataSourceJavaInfo(location)
-        try:
-            connection = drvmgr.getConnectionWithInfo(url, info)
-        except exception as e:
-            print("OptionDialog._viewData() ERROR: %s" % e)
-        print("OptionDialog._viewData() isconnected %s" % connection.iClosed())
-
-
+        dbcontext = createService(self.ctx, 'com.sun.star.sdb.DatabaseContext')
+        url, error = getDataSourceUrl(self.ctx, dbcontext, g_host, g_identifier, False)
+        if error is not None:
+            return
+        desktop = createService(self.ctx, 'com.sun.star.frame.Desktop')
+        desktop.loadComponentFromURL(url, '_default', 0, ())
 
     # XServiceInfo
     def supportsService(self, service):
