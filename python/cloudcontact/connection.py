@@ -74,11 +74,12 @@ class Connection(unohelper.Base,
                  XGroupsSupplier,
                  XTableUIProvider,
                  XConnectionTools):
-    def __init__(self, ctx, connection, protocols, username):
+    def __init__(self, ctx, connection, protocols, username, event):
         self.ctx = ctx
         self.connection = connection
         self.protocols = protocols
         self.username = username
+        self.event = event
         self.listeners = []
 
     # XComponent
@@ -88,6 +89,8 @@ class Connection(unohelper.Base,
         event.Source = self
         for listener in self.listeners:
             litener.disposing(event)
+        if not self.connection.isClosed():
+            self.close()
     def addEventListener(self, listener):
         print("Connection.addEventListener()")
         self.listeners.append(listener)
@@ -127,6 +130,7 @@ class Connection(unohelper.Base,
     def close(self):
         print("Connection.close()********* 1")
         self.connection.close()
+        self.event.set()
         print("Connection.close()********* 2")
 
     # XCommandPreparation
@@ -499,6 +503,7 @@ class Statement(BaseStatement,
     def __init__(self, connection):
         self.connection = connection
         self.statement = connection.connection.createStatement()
+        print("Statement.__init__()")
 
     @property
     def EscapeProcessing(self):
@@ -509,13 +514,15 @@ class Statement(BaseStatement,
 
     # XStatement
     def executeQuery(self, sql):
-        print("Connection.Statement.executeQuery(): %s" % sql)
+        print("Statement.executeQuery(): %s" % sql)
         result = self.statement.executeQuery(sql)
         #result = ResultSet(self, sql)
         return result
     def executeUpdate(self, sql):
+        print("Statement.executeUpdate(): %s" % sql)
         return self.statement.executeUpdate(sql)
     def execute(self, sql):
+        print("Statement.execute(): %s" % sql)
         return self.statement.execute(sql)
     def getConnection(self):
         print("Connection.Statement.getConnection()")
@@ -562,22 +569,22 @@ class PreparedStatement(BaseStatement,
         try:
             print("Connection.PreparedStatement.executeQuery() hack 1")
             return self.statement.executeQuery()
-        except:
-            pass
+        except Exception as e:
+            print("PreparedStatement.executeQuery() ERROR: %s - %s" % (e, traceback.print_exc()))
         try:
             print("Connection.PreparedStatement.executeQuery() hack 2")
             if self.statement.execute():
                 return self.statement.getResultSet()
-        except:
-            pass
+        except Exception as e:
+            print("PreparedStatement.executeQuery() ERROR: %s - %s" % (e, traceback.print_exc()))
         try:
             print("Connection.PreparedStatement.executeQuery() hack 3")
             statement = self.connection.connection.createStatement()
             return statement.executeQuery(self.sql)
-        except:
-            pass
+        except Exception as e:
+            print("PreparedStatement.executeQuery() ERROR: %s - %s" % (e, traceback.print_exc()))
         print("Connection.PreparedStatement.executeQuery() hack 4")
-        raise SQLException()
+        raise e
     def executeUpdate(self):
         return self.statement.executeUpdate()
     def execute(self):

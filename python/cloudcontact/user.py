@@ -26,10 +26,14 @@ class User(unohelper.Base,
         self._Warnings = None
         self.Request = datasource.getRequest(name)
         self.MetaData = datasource.selectUser(name)
+        self.Fields = datasource.getUserFields()
 
     @property
     def People(self):
         return self.MetaData.getDefaultValue('People', None)
+    @property
+    def Group(self):
+        return self.MetaData.getDefaultValue('Group', None)
     @property
     def Resource(self):
         return self.MetaData.getDefaultValue('Resource', None)
@@ -41,7 +45,7 @@ class User(unohelper.Base,
         return self.MetaData.getDefaultValue('PeopleSync', None)
     @property
     def GroupSync(self):
-        return self.MetaData.getDefaultValue('GroupSync ', None)
+        return self.MetaData.getDefaultValue('GroupSync', None)
     @property
     def Warnings(self):
         return self._Warnings
@@ -61,7 +65,7 @@ class User(unohelper.Base,
         self.MetaData = metadata
 
     def getConnection(self, dbname, password):
-        url, self.Warnings = getDataSourceUrl(self.ctx, dbname, g_identifier, False)
+        url, self.Warnings = getDataSourceUrl(self.ctx, dbname, g_identifier, True)
         if self.Warnings is None:
             credential = self.getCredential(password)
             connection, self.Warnings = getDataSourceConnection(self.ctx, url, dbname, *credential)

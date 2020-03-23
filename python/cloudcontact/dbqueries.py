@@ -2,11 +2,11 @@
 # -*- coding: utf_8 -*-
 
 from .dbconfig import g_csv
-
+from .configuration import g_member
 
 def getSqlQuery(name, format=None):
 
-# Create Static Table Queries
+# Create Text Table Queries
     if name == 'createTableTables':
         c1 = '"Table" INTEGER NOT NULL PRIMARY KEY'
         c2 = '"Name" VARCHAR(100) NOT NULL'
@@ -146,6 +146,19 @@ def getSqlQuery(name, format=None):
     elif name == 'createView':
         query = 'CREATE VIEW "%s"(%s) AS SELECT %s FROM %s' % format
 
+    elif name == 'createGroupView':
+        q = """\
+CREATE VIEW IF NOT EXISTS "%(Schema)s"."%(View)s" AS
+  SELECT "AddressBook".* FROM "AddressBook"
+  JOIN "Connections" ON "AddressBook"."People"="Connections"."People"
+  JOIN "Groups" ON "Connections"."Group"="Groups"."Group"
+  WHERE "Groups"."Group"=%(Group)s"""
+        query = q % format
+
+# Drop Dynamic View Queries
+    elif name == 'dropGroupView':
+        query = 'DROP VIEW IF EXISTS "%(Schema)s"."%(View)s"' % format
+
 # Create Trigger Query
     elif name == 'createTriggerUpdateAddressBook':
         query = 'CREATE TRIGGER "AddressBookUpdate" INSTEAD OF UPDATE ON "AddressBook" '
@@ -160,21 +173,23 @@ def getSqlQuery(name, format=None):
         q += '; END IF;'
         query = q % format
 
-# Create Role Query
-    elif name == 'createRole':
-        query = 'CREATE ROLE "FRONT_END"'
-
-# Grant Role Query
-    elif name == 'grantRole':
-        query = 'GRANT SELECT ON TABLE "AddressBook" TO "FRONT_END"'
-
-# Create User Query
+# Create User and Schema Query
     elif name == 'createUser':
-        query = 'CREATE USER "%s" PASSWORD \'%s\' ADMIN' % format
+        q = 'CREATE USER "%(UserName)s" PASSWORD \'%(Password)s\''
+        if format.get('Admin', False):
+            q += ' ADMIN'
+        query = q % format
 
-# Grant User Query
-    elif name == 'grantUser':
-        query = 'GRANT "FRONT_END" TO "%s"' % format
+    elif name == 'createSchema':
+        query = 'CREATE SCHEMA "%(UserName)s" AUTHORIZATION "%(UserName)s"' % format
+
+    elif name == 'setUserSchema':
+        q = 'ALTER USER "%(UserName)s" SET INITIAL SCHEMA'
+        if format.get('Admin', False):
+            q += ' PUBLIC'
+        else:
+            q += ' "%(UserName)s"'
+        query = q % format
 
 # Get last IDENTITY value that was inserted into a table by the current session
     elif name == 'getIdentity':
@@ -216,29 +231,36 @@ def getSqlQuery(name, format=None):
         query = 'SELECT %s FROM %s WHERE %s' % p
 
     elif name == 'getViews':
-        s1 = '"T"."Table" AS "TableId"'
+        s1 = '"T1"."Table" AS "TableId"'
         s2 = '"TL"."Label" AS "LabelId"'
         s3 = '"TT"."Type" AS "TypeId"'
-        s4 = '"T"."Name" AS "Table"'
+        s4 = '"T1"."Name" AS "Table"'
         s5 = '"L"."Name" AS "Label"'
-        s6 = '"T3"."Name" AS "Type"'
-        s7 = 'CONCAT(COALESCE("T3"."Name",\'\'),COALESCE("TL"."View","L"."Name")) AS "View"'
-        s8 = '"T1"."Name" AS "PrimaryTable"'
-        s9 = '"C1"."Name" AS "PrimaryColumn"'
-        s10 = '"T2"."Name" AS "ForeignTable"'
-        s11 = '"C2"."Name" AS "ForeignColumn"'
-        s = (s1,s2,s3,s4,s5,s6,s7,s8,s9,s10,s11)
-        f1 = '"Tables" AS "T", "Tables" AS "T1", "Tables" AS "T2"'
-        f2 = 'JOIN "TableLabel" AS "TL" ON "T"."Table"="TL"."Table"'
+        s6 = '"T"."Name" AS "Type"'
+        s7 = 'CONCAT(COALESCE("T"."Name",\'\'),COALESCE("TL"."View","L"."Name")) AS "View"'
+        s8 = '"T2"."Name" AS "PrimaryTable"'
+        s9 = '"C"."Name" AS "PrimaryColumn"'
+        s = (s1,s2,s3,s4,s5,s6,s7,s8,s9)
+        f1 = '"Tables" AS "T1", "Tables" AS "T2"'
+        f2 = 'JOIN "TableLabel" AS "TL" ON "T1"."Table"="TL"."Table"'
         f3 = 'JOIN "Labels" AS "L" ON "TL"."Label"="L"."Label"'
-        f4 = 'LEFT JOIN "TableType" AS "TT" ON "T"."Table"="TT"."Table"'
-        f5 = 'LEFT JOIN "Types" AS "T3" ON "TT"."Type"="T3"."Type"'
-        f6 = 'JOIN "Columns" AS "C1" ON "T1"."Identity"="C1"."Column"'
-        f7 = 'JOIN "Columns" AS "C2" ON "T2"."Identity"="C2"."Column"'
-        w = '"T1"."Identity"=0 AND "T2"."Identity"=7 AND "T"."Name"=? '
-        f = (f1, f2, f3, f4, f5, f6, f7)
+        f4 = 'LEFT JOIN "TableType" AS "TT" ON "T1"."Table"="TT"."Table"'
+        f5 = 'LEFT JOIN "Types" AS "T" ON "TT"."Type"="T"."Type"'
+        f6 = 'JOIN "Columns" AS "C" ON "T2"."Identity"="C"."Column"'
+        w = '"T2"."Identity"=1 AND "T1"."Name"=? '
+        f = (f1, f2, f3, f4, f5, f6)
         p = (','.join(s), ' '.join(f), w)
         query = 'SELECT %s FROM %s WHERE %s ORDER BY "TableId","LabelId","TypeId"' % p
+
+    elif name == 'getFieldNames':
+        s = '"Fields"."Name"'
+        f1 = '"Fields"'
+        f2 = 'JOIN "Tables" ON "Fields"."Table"=%s AND "Fields"."Column"="Tables"."Table"'
+        f = (f1, f2 % "'Tables'")
+        w1 = '"Tables"."View"=TRUE'
+        w2 = '"Fields"."Table"=%s AND "Fields"."Column"=1' % "'Loop'"
+        p = (s, ' '.join(f), w1, s, f1, w2)
+        query = 'SELECT %s FROM %s WHERE %s UNION SELECT %s FROM %s WHERE %s' % p
 
     elif name == 'getFieldsMap':
         s1 = '"F"."Name" AS "Value"'
@@ -258,7 +280,7 @@ def getSqlQuery(name, format=None):
     elif name == 'getTypeIndex':
         query = 'SELECT "Value","Type" FROM "Types" ORDER BY "Type"'
 
-    elif name == 'getTypeDefault':
+    elif name == 'getTypeDefaultIndex':
         c1 = '"T2"."Name"'
         c2 = '"T1"."Type"'
         f1 = '"TableType" AS "T1"'
@@ -270,18 +292,6 @@ def getSqlQuery(name, format=None):
 
     elif name == 'getLabelIndex':
         query = 'SELECT "Name","Label" FROM "Labels" ORDER BY "Label"'
-
-    elif name == 'getFieldIndex':
-        s = 'COALESCE("Tables"."Name","Columns"."Name","Labels"."Name","Fields"."Name") AS "Name"'
-        f1 = '"Fields" AS "F"'
-        f2 = 'LEFT JOIN "Tables" ON "F"."Table"=%s AND "F"."Column"="Tables"."Table"'
-        f3 = 'LEFT JOIN "Columns" ON "F"."Table"=%s AND "F"."Column"="Columns"."Column"'
-        f4 = 'LEFT JOIN "Labels" ON "F"."Table"=%s AND "F"."Column"="Labels"."Label"'
-        f5 = 'LEFT JOIN "Fields" ON "F"."Table"=%s AND "F"."Field"="Fields"."Field"'
-        f = (f1, f2 % "'Tables'", f3 % "'Columns'", f4 % "'Labels'", f5 % "'Loop'")
-        w = '"F"."Method"=? AND "F"."Type"=%s AND "F"."Table"=%s' % ("'Primary'","'Columns'")
-        p = (s, ' '.join(f), w)
-        query = 'SELECT %s FROM %s WHERE %s' % p
 
     elif name == 'getPrimaryTable':
         s = 'COALESCE("Tables"."Name","Columns"."Name","Labels"."Name","Fields"."Name") AS "Name"'
@@ -298,51 +308,20 @@ def getSqlQuery(name, format=None):
     elif name == 'getPeopleIndex':
         query = 'SELECT "Resource","People" FROM "Peoples" ORDER BY "People"'
 
-    elif name == 'getGroupIndex':
-        query = 'SELECT "Resource","Group" FROM "Groups" WHERE "People"=? ORDER BY "Group"'
-
     elif name == 'getPerson':
-        columns = '"People","Resource","Account","PeopleSync","GroupSync"'
-        query = 'SELECT %s FROM "Peoples" WHERE "Account"=?' % columns
+        c = '"People","Group","Resource","Account","PeopleSync","GroupSync"'
+        f = '"Peoples" JOIN "Groups"'
+        o1 = '"Peoples"."People"="Groups"."People"'
+        o2 = '"Peoples"."Resource"="Groups"."Resource"'
+        w = '"Peoples"."Account"=?'
+        query = 'SELECT %s FROM %s ON %s AND %s WHERE %s' % (c, f, o1, o2, w)
 
-    elif name == 'getUpdatedGroups':
-        c = "'contactGroups/'"
-        #q = 'SELECT DISTINCT "Resource" FROM "Groups" FOR SYSTEM_TIME FROM CURRENT_TIMESTAMP - 1 YEAR TO CURRENT_TIMESTAMP'
-        q = 'SELECT CONCAT(%s,"Resource") FROM "Groups" WHERE "People"=? AND "TimeStamp"=?'
-        query = q % c
-
-# Insert Queries
-    elif name == 'insertPerson':
-        columns = '"Resource","Account"'
-        values = '?,?'
-        query = 'INSERT INTO "Peoples" (%s) VALUES (%s)' % (columns, values)
-
-    elif name == 'insertPeople':
-        columns = '"Resource"'
-        values = '?'
-        query = 'INSERT INTO "Peoples" (%s) VALUES (%s)' % (columns, values)
-
-    elif name == 'insertConnection':
-        columns = '"People","Connection"'
-        values = '?,?'
-        query = 'INSERT INTO "Connections" (%s) VALUES (%s)' % (columns, values)
-
-    elif name == 'insertTypes':
-        columns = '"Name","Value"'
-        values = '?,?'
-        query = 'INSERT INTO "Types" (%s) VALUES (%s)' % (columns, values)
-
-    elif name == 'insertGroups':
-        columns = '"People","Resource","Name","TimeStamp"'
-        values = '?,?,?,?'
-        query = 'INSERT INTO "Groups" (%s) VALUES (%s)' % (columns, values)
+    elif name == 'getUpdatedGroup':
+        query = 'SELECT "Resource" FROM "Groups" FOR SYSTEM_TIME AS OF CURRENT_TIMESTAMP - 1 YEAR'
 
 # Update Queries
     elif name == 'updatePeoples':
         query = 'UPDATE "Peoples" SET "TimeStamp"=? WHERE "Resource"=?'
-
-    elif name == 'updateGroups':
-        query = 'UPDATE "Groups" SET "Name"=?,"TimeStamp"=? WHERE "People"=? AND "Resource"=?'
 
     elif name == 'updatePeopleSync':
         query = 'UPDATE "Peoples" SET "PeopleSync"=?,"TimeStamp"=? WHERE "People"=?'
@@ -354,9 +333,201 @@ def getSqlQuery(name, format=None):
     elif name == 'getVerion':
         query = 'Select DISTINCT DATABASE_VERSION() as "HSQL Version" From INFORMATION_SCHEMA.SYSTEM_TABLES'
 
+# Create Trigger Query
+    elif name == 'createTriggerGroupInsert':
+        query = """\
+CREATE TRIGGER "GroupInsert" AFTER INSERT ON "Groups"
+  REFERENCING NEW ROW AS "NewRow"
+  FOR EACH ROW
+  BEGIN ATOMIC
+    CALL "GroupView" ("NewRow"."Name", "NewRow"."Group")
+  END"""
+
+    elif name == 'selectUpdatedGroup':
+        query = '''\
+SELECT ?||"Resource" FROM "Groups" WHERE "GroupSync"=FALSE AND "People"=? AND "Resource"<>?'''
+
+    elif name == 'truncatGroup':
+        q = """\
+TRUNCATE TABLE "Groups" VERSIONING TO TIMESTAMP'%(TimeStamp)s'"""
+        query = q % format
+
+# Create Procedure Query
+    elif name == 'createSelectGroup':
+        query = """\
+CREATE PROCEDURE "SelectGroup"(IN "Prefix" VARCHAR(50),
+                               IN "PeopleId" INTEGER,
+                               IN "ResourceName" VARCHAR(100))
+  SPECIFIC "SelectGroup_1"
+  READS SQL DATA
+  DYNAMIC RESULT SETS 1
+  BEGIN ATOMIC
+    DECLARE "StartTime","EndTime","Format" VARCHAR(30);
+    DECLARE "TmpTime" TIMESTAMP(6);
+    DECLARE "Result" CURSOR WITH RETURN FOR
+      SELECT "Prefix"||"Resource" FROM "Groups" FOR SYSTEM_TIME FROM 
+      TO_TIMESTAMP('%(Start)s','%(Format)s') TO TO_TIMESTAMP('%(End)s','%(Format)s')
+      WHERE "People"="PeopleId" AND "Resource"<>"ResourceName" FOR READ ONLY;
+    SET "Time" = LOCALTIMESTAMP(6)
+    SET "TmpTime" = "Time" - 10 MINUTE
+    SET "Format" = 'YYYY-MM-DDTHH24:MI:SS.FFFZ'
+    SET "EndTime" = TO_CHAR("Time","Format");
+    SET "StartTime" = TO_CHAR("TmpTime","Format");
+    SET "Time" = "EndTime";
+    OPEN "Result";
+  END"""
+
+    elif name == 'createInsertUser':
+        query = """\
+CREATE PROCEDURE "InsertUser"(IN "ResourceName" VARCHAR(100),
+                              IN "UserName" VARCHAR(100),
+                              IN "GroupName" VARCHAR(100))
+  SPECIFIC "InsertUser_1"
+  MODIFIES SQL DATA
+  DYNAMIC RESULT SETS 1
+  BEGIN ATOMIC
+    DECLARE "Result" CURSOR WITH RETURN FOR
+      SELECT "People", "Group", "Resource", "Account", "PeopleSync", "GroupSync"
+      FROM "Peoples" JOIN "Groups" ON "Peoples"."People"="Groups"."People"
+      AND "Peoples"."Resource"="Groups"."Resource"
+      WHERE "Peoples"."Resource"="ResourceName" FOR READ ONLY;
+    INSERT INTO "Peoples" ("Resource","Account") VALUES ("ResourceName","UserName");
+    INSERT INTO "Groups" ("People","Resource","Name")
+      VALUES (IDENTITY(),"ResourceName","GroupName");
+    OPEN "Result";
+  END"""
+
+    elif name == 'createInsertType':
+        query = """\
+CREATE PROCEDURE "InsertType"(IN "TypeName" VARCHAR(100),
+                              OUT "TypeId" INTEGER)
+  SPECIFIC "InsertType_1"
+  MODIFIES SQL DATA
+  BEGIN ATOMIC
+    INSERT INTO "Types" ("Name","Value") VALUES ("TypeName","TypeName");
+    SET "TypeId" = IDENTITY();
+  END"""
+
+    elif name == 'createInsertPeople':
+        query = """\
+CREATE PROCEDURE "InsertPeople"(IN "ResourceName" VARCHAR(100),
+                                IN "GroupId" INTEGER,
+                                IN "Time" TIMESTAMP(6),
+                                OUT "PeopleId" INTEGER)
+  SPECIFIC "InsertPeople_1"
+  MODIFIES SQL DATA
+  BEGIN ATOMIC
+    DECLARE "Id" INTEGER;
+    INSERT INTO "Peoples" ("Resource","TimeStamp") VALUES ("ResourceName","Time");
+    SET "Id" = IDENTITY();
+    INSERT INTO "Connections" ("Group","People","TimeStamp") VALUES ("GroupId","Id","Time");
+    SET "PeopleId" = "Id";
+  END"""
+
+    elif name == 'createDeletePeople':
+        query = """\
+CREATE PROCEDURE "DeletePeople"(IN "Prefix" VARCHAR(50),
+                                IN "ResourceName" VARCHAR(100))
+  SPECIFIC "DeletePeople_1"
+  MODIFIES SQL DATA
+  BEGIN ATOMIC
+    DECLARE "PeopleResource" VARCHAR(100);
+    SET "PeopleResource" = REPLACE("ResourceName", "Prefix");
+    DELETE FROM "Peoples" WHERE "Resource"="PeopleResource";
+  END"""
+
+    elif name == 'createMergeGroup':
+        query = """\
+CREATE PROCEDURE "MergeGroup"(IN "Prefix" VARCHAR(50),
+                              IN "PeopleId" INTEGER,
+                              IN "ResourceName" VARCHAR(100),
+                              IN "Time" TIMESTAMP(6),
+                              INOUT "GroupName" VARCHAR(100),
+                              OUT "GroupId" INTEGER)
+  SPECIFIC "MergeGroup_1"
+  MODIFIES SQL DATA
+  BEGIN ATOMIC
+    DECLARE "GroupResource", "OldName" VARCHAR(100);
+    SET "GroupResource" = REPLACE("ResourceName", "Prefix");
+    SELECT COALESCE("Name",'') INTO "OldName" FROM "Groups" WHERE "Resource"="GroupResource";
+    MERGE INTO "Groups" USING (VALUES("PeopleId","GroupResource","GroupName","Time"))
+      AS vals(w,x,y,z) ON "Groups"."Resource"=vals.x
+      WHEN MATCHED THEN UPDATE SET "People"=vals.w, "Name"=vals.y, "TimeStamp"=vals.z, "GroupSync"=FALSE
+      WHEN NOT MATCHED THEN INSERT ("People","Resource","Name","TimeStamp") VALUES vals.w, vals.x, vals.y, vals.z;
+    SELECT "Group" INTO "GroupId" FROM "Groups" WHERE "Resource"="GroupResource";
+    SET "GroupName" = "OldName";
+  END"""
+
+    elif name == 'createDeleteGroup':
+        query = """\
+CREATE PROCEDURE "DeleteGroup"(IN "Prefix" VARCHAR(50),
+                               IN "PeopleId" INTEGER,
+                               IN "ResourceName" VARCHAR(100),
+                               OUT "GroupName" VARCHAR(100))
+  SPECIFIC "DeleteGroup_1"
+  MODIFIES SQL DATA
+  BEGIN ATOMIC
+    DECLARE "GroupResource" VARCHAR(100);
+    SET "GroupResource" = REPLACE("ResourceName", "Prefix");
+    SELECT "Name" INTO "GroupName" FROM "Groups" WHERE "People"="PeopleId" AND "Resource"="GroupResource";
+    DELETE FROM "Groups" WHERE "People"="PeopleId" AND "Resource"="GroupResource";
+  END"""
+
+    elif name == 'createMergeConnection':
+        q = """\
+CREATE PROCEDURE "MergeConnection"(IN "GroupPrefix" VARCHAR(50),
+                                   IN "PeoplePrefix" VARCHAR(50),
+                                   IN "ResourceName" VARCHAR(100),
+                                   IN "Time" TIMESTAMP(6),
+                                   IN "Separator" VARCHAR(1),
+                                   IN "MembersList" VARCHAR(15000))
+  SPECIFIC "MergeConnection_1"
+  MODIFIES SQL DATA
+  BEGIN ATOMIC
+    DECLARE "Index" INTEGER DEFAULT 1;
+    DECLARE "Pattern" VARCHAR(5) DEFAULT '[^$]+';
+    DECLARE "GroupId", "PeopleId" INTEGER;
+    DECLARE "GroupResource", "PeopleResource" VARCHAR(100);
+    DECLARE "MembersArray" VARCHAR(100) ARRAY[%s];
+    SET "GroupResource" = REPLACE("ResourceName", "GroupPrefix");
+    SELECT "Group" INTO "GroupId" FROM "Groups" WHERE "Resource"="GroupResource";
+    DELETE FROM "Connections" WHERE "Group"="GroupId";
+    SET "Pattern" = REPLACE("Pattern", '$', "Separator");
+    SET "MembersArray" = REGEXP_SUBSTRING_ARRAY("MembersList", "Pattern");
+    WHILE "Index" <= CARDINALITY("MembersArray") DO
+      SET "PeopleResource" = REPLACE("MembersArray"["Index"], "PeoplePrefix");
+      SELECT "People" INTO "PeopleId" FROM "Peoples" WHERE "Resource"="PeopleResource";
+      INSERT INTO "Connections" ("Group","People","TimeStamp") VALUES ("GroupId","PeopleId","Time");
+      SET "Index" = "Index" + 1;
+    END WHILE;
+    UPDATE "Groups" SET "GroupSync"=TRUE WHERE "Group"="GroupId";
+  END"""
+        query = q % g_member
+
+# Get Procedure Query
+    elif name == 'insertUser':
+        query = 'CALL "InsertUser"(?,?,?)'
+    elif name == 'insertType':
+        query = 'CALL "InsertType"(?,?)'
+    elif name == 'insertPeople':
+        query = 'CALL "InsertPeople"(?,?,?,?)'
+    elif name == 'deletePeople':
+        query = 'CALL "DeletePeople"(?,?)'
+    elif name == 'selectGroup':
+        query = 'CALL "SelectGroup"(?,?,?,?)'
+    elif name == 'mergeGroup':
+        query = 'CALL "MergeGroup"(?,?,?,?,?,?)'
+    elif name == 'deleteGroup':
+        query = 'CALL "DeleteGroup"(?,?,?,?)'
+    elif name == 'mergeConnection':
+        query = 'CALL "MergeConnection"(?,?,?,?,?,?)'
+
 # ShutDown Queries
     elif name == 'shutdown':
-        query = 'SHUTDOWN;'
+        if format:
+            query = 'SHUTDOWN COMPACT;'
+        else:
+            query = 'SHUTDOWN;'
 
     elif name == 'shutdownCompact':
         query = 'SHUTDOWN COMPACT;'
