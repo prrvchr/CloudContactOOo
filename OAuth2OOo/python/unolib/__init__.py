@@ -3,12 +3,14 @@
 
 from .keymap import KeyMap
 
+
 from .unolib import InteractionHandler
 from .unolib import Initialization
 from .unolib import PropertySet
 from .unolib import PropertySetInfo
 from .unolib import PropertiesChangeNotifier
 from .unolib import PropertySetInfoChangeNotifier
+
 
 from .unotools import createMessageBox
 from .unotools import createService
