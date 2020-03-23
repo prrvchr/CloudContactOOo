@@ -1,7 +1,6 @@
 #!
 # -*- coding: utf-8 -*-
 
-
 from .keymap import KeyMap
 
 from .unolib import InteractionHandler
