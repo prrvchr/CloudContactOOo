@@ -3,14 +3,12 @@
 
 from .keymap import KeyMap
 
-
 from .unolib import InteractionHandler
 from .unolib import Initialization
 from .unolib import PropertySet
 from .unolib import PropertySetInfo
 from .unolib import PropertiesChangeNotifier
 from .unolib import PropertySetInfoChangeNotifier
-
 
 from .unotools import createMessageBox
 from .unotools import createService
@@ -31,10 +29,7 @@ from .unotools import getSimpleFile
 from .unotools import getInteractionHandler
 from .unotools import getDialog
 from .unotools import getDialogUrl
-from .unotools import getDateTime
 from .unotools import parseDateTime
-from .unotools import unparseDateTime
-from .unotools import unparseTimeStamp
 
 from .unocore import PropertyContainer
 

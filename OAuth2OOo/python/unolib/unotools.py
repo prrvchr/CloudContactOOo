@@ -158,47 +158,22 @@ def getInteractionHandler(ctx):
     interaction = ctx.ServiceManager.createInstanceWithArguments(service, args)
     return interaction
 
-def getDateTime(utc=True):
-    if utc:
-        t = datetime.datetime.utcnow()
-    else:
+def parseDateTime(timestr='', format='%Y-%m-%dT%H:%M:%S.%fZ'):
+    if not timestr:
         t = datetime.datetime.now()
-    return _getDateTime(t.microsecond, t.second, t.minute, t.hour, t.day, t.month, t.year, utc)
-
-def parseDateTime(timestr='', format='%Y-%m-%dT%H:%M:%S.%fZ', utc=True):
-    if timestr != '':
+    else:
         t = datetime.datetime.strptime(timestr, format)
-    elif utc:
-        t = datetime.datetime.utcnow()
-    else:
-        t = datetime.datetime.now()
-    return _getDateTime(t.microsecond, t.second, t.minute, t.hour, t.day, t.month, t.year, utc)
+    return _getDateTime(t.microsecond, t.second, t.minute, t.hour, t.day, t.month, t.year)
 
-def unparseDateTime(t=None, utc=True, decimal=6):
+def unparseDateTime(t=None):
     if t is None:
-        if utc:
-            now = datetime.datetime.utcnow()
-        else:
-            now = datetime.datetime.now()
-        return now.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
-    fraction = 0
+        return datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+    millisecond = 0
     if hasattr(t, 'HundredthSeconds'):
-        fraction = t.HundredthSeconds // (10 ** (3 -decimal))
+        millisecond = t.HundredthSeconds * 10
     elif hasattr(t, 'NanoSeconds'):
-        fraction = t.NanoSeconds // (10 ** (9 - decimal))
-    format = '%04d-%02d-%02dT%02d:%02d:%02d.%'
-    format += '0%sdZ' % decimal
-    return format % (t.Year, t.Month, t.Day, t.Hours, t.Minutes, t.Seconds, fraction)
-
-def unparseTimeStamp(t=None, utc=True):
-    if t is None:
-        if utc:
-            now = datetime.datetime.utcnow()
-        else:
-            now = datetime.datetime.now()
-        return now.strftime('%Y-%m-%d %H:%M:%S')
-    format = '%04d-%02d-%02d %02d:%02d:%02d'
-    return format % (t.Year, t.Month, t.Day, t.Hours, t.Minutes, t.Seconds)
+        millisecond = t.NanoSeconds // 1000000
+    return '%s-%s-%sT%s:%s:%s.%03dZ' % (t.Year, t.Month, t.Day, t.Hours, t.Minutes, t.Seconds, millisecond)
 
 def _getDateTime(microsecond=0, second=0, minute=0, hour=0, day=1, month=1, year=1970, utc=True):
     t = uno.createUnoStruct('com.sun.star.util.DateTime')
@@ -215,3 +190,4 @@ def _getDateTime(microsecond=0, second=0, minute=0, hour=0, day=1, month=1, year
     if hasattr(t, 'IsUTC'):
         t.IsUTC = utc
     return t
+
