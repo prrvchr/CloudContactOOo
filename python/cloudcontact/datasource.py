@@ -267,17 +267,6 @@ class DataSource(unohelper.Base,
         call.addBatch()
         return KeyMap(**{token: value})
 
-<<<<<<< HEAD
-    def getTableIndex(self, table):
-        map = {}
-        call = self.getDataSourceCall('get%sIndex' % table)
-        result = call.executeQuery()
-        while result.next():
-            map[result.getString(1)] = result.getLong(2)
-        return map
-
-=======
->>>>>>> a15dd10d6035a01682d0decaddefc4eeb6cc051b
     def mergePeople(self, user, resource, timestamp, deleted):
         call = self.getDataSourceCall('mergePeople', True)
         call.setString(1, 'people/')
@@ -398,17 +387,6 @@ class DataSource(unohelper.Base,
         if batched and key not in self._batchedCall:
             self._batchedCall.append(key)
         return self._CallsPool[key]
-<<<<<<< HEAD
-
-    def getPreparedCall1(self, name):
-        if name  not in self._CallsPool:
-            query = 'CALL "Merge%s"(?,?,?,?,?,?,?)' % name
-            self._CallsPool[name] = self.Connection.prepareCall(query)
-        if name not in self._batchedCall:
-            self._batchedCall.append(name)
-        return self._CallsPool[name]
-=======
->>>>>>> a15dd10d6035a01682d0decaddefc4eeb6cc051b
 
     def getPreparedCall(self, name):
         if name not in self._CallsPool:

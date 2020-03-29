@@ -199,11 +199,7 @@ GRANT SELECT ON "%(View)s" TO "%(User)s";
         q = 'ALTER USER "%(User)s" SET INITIAL SCHEMA'
         if format.get('Admin', False):
             #q += ' PUBLIC'
-<<<<<<< HEAD
-            q += ' "%(UserName)s"'
-=======
             q += ' "%(User)s"'
->>>>>>> a15dd10d6035a01682d0decaddefc4eeb6cc051b
         else:
             q += ' "%(User)s"'
         query = q % format
@@ -426,20 +422,6 @@ CREATE PROCEDURE "GetTypeIndex"(IN "TableName" VARCHAR(100),
   MODIFIES SQL DATA
   BEGIN ATOMIC
     DECLARE "TypeIndex" INTEGER DEFAULT NULL;
-<<<<<<< HEAD
-    IF "TypeName" IS NULL THEN
-      SET "TypeIndex" = SELECT "Type" FROM "TableType" JOIN "Tables"
-        ON "TableType"."Table"="Tables"."Table"
-          WHERE "TableType"."Default"=TRUE AND "Tables"."Name"="TableName";
-    ELSE
-      SET "TypeIndex" = SELECT "Type" FROM "Types" WHERE "Name"="TypeName";
-      IF "TypeIndex" IS NULL THEN 
-        SET "TypeIndex" = SELECT "Type" FROM "Types" WHERE "Value"="TypeName";
-        IF "TypeIndex" IS NULL THEN 
-          INSERT INTO "Types" ("Name","Value") VALUES ("TypeName","TypeName");
-          SET "TypeIndex" = IDENTITY();
-        END IF;
-=======
     SET "TypeIndex" = SELECT "Type" FROM "Types" WHERE "Name"="TypeName";
     IF "TypeIndex" IS NULL THEN
       SET "TypeIndex" = SELECT "Type" FROM "TableType" JOIN "Tables"
@@ -448,7 +430,6 @@ CREATE PROCEDURE "GetTypeIndex"(IN "TableName" VARCHAR(100),
       IF "TypeIndex" IS NULL THEN 
         INSERT INTO "Types" ("Name","Value") VALUES ("TypeName","TypeName");
         SET "TypeIndex" = IDENTITY();
->>>>>>> a15dd10d6035a01682d0decaddefc4eeb6cc051b
       END IF;
     END IF;
     SET "TypeId" = "TypeIndex";
@@ -472,58 +453,7 @@ CREATE PROCEDURE "MergePeople"(IN "Prefix" VARCHAR(50),
       INSERT INTO "Peoples" ("Resource","TimeStamp") VALUES ("PeopleResource","Time");
       INSERT INTO "Connections" ("Group","People","TimeStamp") VALUES ("GroupId",IDENTITY(),"Time");
     END IF;
-<<<<<<< HEAD
   END"""
-
-    elif name == 'createUnTypedMerge':
-        q = """\
-CREATE PROCEDURE "Merge%(Table)s"(IN "Table" VARCHAR(50),
-                                  IN "Prefix" VARCHAR(50),
-                                  IN "ResourceName" VARCHAR(100),
-                                  IN "LabelName" VARCHAR(100),
-                                  IN "Value" VARCHAR(100),
-                                  IN "Time" TIMESTAMP(6))
-  SPECIFIC "Merge%(Table)s_1"
-  MODIFIES SQL DATA
-  BEGIN ATOMIC
-    DECLARE "PeopleIndex","LabelIndex" INTEGER DEFAULT NULL;
-    SET "PeopleIndex" = "GetPeopleIndex"("Prefix","ResourceName");
-    SET "LabelIndex" = "GetLabelIndex"("LabelName");
-    MERGE INTO "%(Table)s" USING
-      (VALUES("PeopleIndex","LabelIndex","Value","Time")) AS vals(w,x,y,z)
-      ON "%(Table)s"."People"=vals.w AND "%(Table)s"."Label"=vals.x
-        WHEN MATCHED THEN UPDATE SET "Value"=vals.y, "TimeStamp"=vals.z
-        WHEN NOT MATCHED THEN INSERT ("People","Label","Value","TimeStamp")
-          VALUES vals.w, vals.x, vals.y, vals.z;
-  END"""
-        query = q % format
-
-    elif name == 'createTypedMerge':
-        q = """\
-CREATE PROCEDURE "Merge%(Table)s"(IN "Table" VARCHAR(50),
-                                  IN "Prefix" VARCHAR(50),
-                                  IN "ResourceName" VARCHAR(100),
-                                  IN "LabelName" VARCHAR(100),
-                                  IN "Value" VARCHAR(100),
-                                  IN "Time" TIMESTAMP(6),
-                                  IN "TypeName" VARCHAR(100))
-  SPECIFIC "Merge%(Table)s_1"
-  MODIFIES SQL DATA
-  BEGIN ATOMIC
-    DECLARE "PeopleIndex","TypeIndex","LabelIndex" INTEGER DEFAULT NULL;
-    SET "PeopleIndex" = "GetPeopleIndex"("Prefix","ResourceName");
-    CALL "GetTypeIndex"("Table","TypeName","TypeIndex");
-    SET "LabelIndex" = "GetLabelIndex"("LabelName");
-    MERGE INTO "%(Table)s" USING
-      (VALUES("PeopleIndex","TypeIndex","LabelIndex","Value","Time")) AS vals(v,w,x,y,z)
-      ON "%(Table)s"."People"=vals.v AND "%(Table)s"."Type"=vals.w AND "%(Table)s"."Label"=vals.x
-        WHEN MATCHED THEN UPDATE SET "Value"=vals.y, "TimeStamp"=vals.z
-        WHEN NOT MATCHED THEN INSERT ("People","Type","Label","Value","TimeStamp")
-          VALUES vals.v, vals.w, vals.x, vals.y, vals.z;
-=======
->>>>>>> a15dd10d6035a01682d0decaddefc4eeb6cc051b
-  END"""
-        query = q % format
 
     elif name == 'createUnTypedMerge':
         q = """\
